@@ -23,6 +23,7 @@ publisher = "Open ERP"          # shown when the module is added
 protocol = 1                    # this document's version
 kind = "measurement"
 description = "Pretends to be a gauge, for trying out capture."   # optional
+update_repository = "owner/name"   # optional: GitHub repository whose releases Open ERP checks for updates
 
 [run]
 program = "simulated-gauge.exe" # relative to the module folder
@@ -35,6 +36,29 @@ Add Module...**. Open ERP refuses packages with unsafe paths (`..`, drive
 letters, reserved Windows names), symbolic links, encrypted entries, more than
 20,000 files or more than 1 GB uncompressed. Adding a newer package with the
 same `id` replaces the old program and keeps the module's settings.
+
+### Automatic updates (optional)
+
+Add `update_repository = "owner/name"` (a public GitHub repository) and Open
+ERP offers new versions of an installed module by itself: at startup (at most
+once a day) and from **Help > Check for Updates...**. It always asks first.
+Older Open ERP versions ignore the key, so adding it needs no protocol change.
+
+To publish an update, create a **normal GitHub release** (not a pre-release or
+draft; Open ERP reads the repository's `releases/latest`) with:
+
+- a tag `v<major>.<minor>.<patch>`, for example `v1.2.0`;
+- the package `<id>-<version>.zip` (for example `my-gauge-1.2.0.zip`, at most
+  512 MB), whose `module.toml` has the same `id`, `publisher` and
+  `update_repository` and `version = "1.2.0"`;
+- `SHA256SUMS.txt` listing the zip (`<sha256>  <file name>` per line).
+
+Open ERP offers the update when the tag is newer than the installed `version`
+(both must be `major.minor.patch`). It downloads the zip, deletes it unless the
+size and SHA-256 match and `module.toml` agrees with the installed module, then
+installs it like **Add Module...** (the settings are kept). A module installed
+before it had the key must be updated by hand once; later releases are then
+offered automatically.
 
 Open ERP keeps modules per Windows user:
 

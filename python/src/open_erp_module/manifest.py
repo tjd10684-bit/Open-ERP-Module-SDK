@@ -12,6 +12,7 @@ from .runtime import PROTOCOL_VERSION
 MANIFEST_NAME = "module.toml"
 _ID = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$")
 _VERSION = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.+-]{0,39}$")
+_REPOSITORY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_][A-Za-z0-9._-]{0,99}$")
 RESERVED_NAMES = frozenset(
     {"con", "prn", "aux", "nul"} | {f"com{n}" for n in range(1, 10)} | {f"lpt{n}" for n in range(1, 10)}
 )
@@ -32,7 +33,7 @@ class Manifest:
     program: str
     args: tuple[str, ...]
     description: str
-
+    update_repository: str = ""
     def program_path(self, folder: Path) -> Path:
         program = Path(self.program)
         return program if program.is_absolute() else folder / program
@@ -85,10 +86,13 @@ def parse(text: str) -> Manifest:
     args = run.get("args", [])
     if not isinstance(args, list) or not all(isinstance(arg, str) for arg in args):
         raise ManifestProblem("run.args must be a list of text values.")
+    repository = _text(data, "update_repository", 140, required=False)
+    if repository and not _REPOSITORY.match(repository):
+        raise ManifestProblem('update_repository must be a GitHub repository written as "owner/name".')
     return Manifest(
         module_id=module_id, name=_text(data, "name", 80), version=version, publisher=_text(data, "publisher", 80),
         protocol=protocol, kind=kind, program=program, args=tuple(args),
-        description=_text(data, "description", 500, required=False),
+        description=_text(data, "description", 500, required=False), update_repository=repository,
     )
 
 

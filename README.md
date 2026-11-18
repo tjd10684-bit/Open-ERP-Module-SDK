@@ -56,7 +56,7 @@ The library has no dependencies beyond Python 3.11+. Releases are tagged
 `vX.Y.Z`; install one from GitHub (Git must be installed):
 
 ```powershell
-python -m pip install "open-erp-module @ git+https://github.com/tjd10684-bit/Open-ERP-Module-SDK@v1.0.0#subdirectory=python"
+python -m pip install "open-erp-module @ git+https://github.com/tjd10684-bit/Open-ERP-Module-SDK@v1.1.0#subdirectory=python"
 ```
 
 List the same requirement in your module's `pyproject.toml` to pin the SDK
@@ -83,6 +83,11 @@ python -m open_erp_module.package dist\my-gauge -o my-gauge-1.0.0.zip
 Operators add the zip in Open ERP under **Settings > Measurement Devices > Add
 Module...**. The [simulated gauge](examples/simulated-gauge/) has a complete
 `build.ps1`.
+
+To have Open ERP offer new versions by itself, add `update_repository =
+"owner/name"` to `module.toml` and publish each version as a normal GitHub
+release containing `<id>-<version>.zip` and `SHA256SUMS.txt`; see *Automatic
+updates* in [`PROTOCOL.md`](PROTOCOL.md).
 
 ## Library tests
 

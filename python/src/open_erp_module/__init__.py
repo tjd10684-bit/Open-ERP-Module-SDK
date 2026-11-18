@@ -36,4 +36,4 @@ from .runtime import (
 __all__ = [
     "PROTOCOL_VERSION", "CaptureRequest", "Context", "Equipment", "Module", "ModuleError", "Reading", "run", "serve",
 ]
-__version__ = "1.0.0"
+__version__ = "1.1.0"

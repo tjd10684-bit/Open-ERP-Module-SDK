@@ -7,7 +7,7 @@ import zipfile
 
 import pytest
 
-from open_erp_module import host_check
+from open_erp_module import host_check, manifest
 from open_erp_module.manifest import ManifestProblem
 from open_erp_module.package import build_package
 
@@ -95,6 +95,21 @@ def test_host_check_explains_a_manifest_saved_with_a_byte_order_mark(tmp_path, c
 
     assert host_check.main([str(folder)]) == 1
     assert "FAIL  module.toml: module.toml starts with a byte order mark" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(("value", "valid"), [
+    ("tjd10684-bit/U-wave-module", True), ("U-wave-module", False), ("https://github.com/owner/name", False),
+])
+def test_update_repository_must_be_owner_slash_name(value, valid):
+    text = MANIFEST.format(program="sample-gauge.exe").replace(
+        'kind = "measurement"', f'kind = "measurement"\nupdate_repository = "{value}"',
+    )
+    if valid:
+        assert manifest.parse(text).update_repository == value
+    else:
+        with pytest.raises(ManifestProblem, match="update_repository"):
+            manifest.parse(text)
+    assert manifest.parse(MANIFEST.format(program="x.exe")).update_repository == ""
 
 
 def test_package_puts_the_manifest_first_and_leaves_out_caches(tmp_path):
