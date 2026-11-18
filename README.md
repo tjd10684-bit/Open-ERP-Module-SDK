@@ -50,12 +50,24 @@ request; Open ERP shows the message to the operator. Use `report_status` to
 show a short status in Open ERP and `assets_changed` when links change outside
 setup.
 
+## Install
+
+The library has no dependencies beyond Python 3.11+. Releases are tagged
+`vX.Y.Z`; install one from GitHub (Git must be installed):
+
+```powershell
+python -m pip install "open-erp-module @ git+https://github.com/tjd10684-bit/Open-ERP-Module-SDK@v1.0.0#subdirectory=python"
+```
+
+List the same requirement in your module's `pyproject.toml` to pin the SDK
+version. From a checkout of this repository, `pip install -e python` installs
+an editable copy instead.
+
 ## Test and package it
 
-The library has no dependencies beyond Python 3.11+. From `python/`,
-`pip install -e .` installs it with the `open-erp-module-check` and
-`open-erp-module-package` commands; `python -m open_erp_module.host_check`
-and `python -m open_erp_module.package` work too.
+Installing adds the `open-erp-module-check` and `open-erp-module-package`
+commands; `python -m open_erp_module.host_check` and
+`python -m open_erp_module.package` work too.
 
 ```powershell
 # Run the module against the protocol checks while developing:
