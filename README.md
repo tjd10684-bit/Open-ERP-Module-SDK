@@ -56,7 +56,7 @@ The library has no dependencies beyond Python 3.11+. Releases are tagged
 `vX.Y.Z`; install one from GitHub (Git must be installed):
 
 ```powershell
-python -m pip install "open-erp-module @ git+https://github.com/tjd10684-bit/Open-ERP-Module-SDK@v1.1.0#subdirectory=python"
+python -m pip install "open-erp-module @ git+https://github.com/tjd10684-bit/Open-ERP-Module-SDK@v1.2.0#subdirectory=python"
 ```
 
 List the same requirement in your module's `pyproject.toml` to pin the SDK
