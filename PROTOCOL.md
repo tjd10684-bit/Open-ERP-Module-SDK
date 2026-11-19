@@ -197,7 +197,8 @@ them to Open ERP assets. Answer `{}` when the window closes.
 
 ```json
 {"jsonrpc": "2.0", "id": 9, "method": "open_setup", "params": {"equipment": [
-  {"asset_id": "5b0f3c9e-...", "tag": "MIC-014", "name": "0-1 in Micrometer", "category": "Micrometer"}]}}
+  {"asset_id": "5b0f3c9e-...", "tag": "MIC-014", "name": "0-1 in Micrometer", "category": "Micrometer"}],
+  "theme": {"version": 1, "mode": "dark", "colors": {"background": "#202124", "text": "#e6e6e6"}}}}
 {"jsonrpc": "2.0", "id": 9, "result": {}}
 ```
 
@@ -205,6 +206,32 @@ them to Open ERP assets. Answer `{}` when the window closes.
 from the list may only be filtered out, so do not delete its link. Open ERP
 lets the module bring its window to the front and asks `linked_assets` when
 setup returns. Captures may arrive while setup is open.
+
+`theme` is optional: Open ERP versions that support it send the colors the
+operator sees right now, so the setup window can match Open ERP in light and
+dark mode; older versions leave it out, so a module must still work without it.
+The Python library exposes it as `Module.host_theme` while `open_setup` runs.
+
+- `version` is `1`. Ignore a theme whose version you do not know.
+- `mode` is `light` or `dark`.
+- `colors` maps role names to `#rrggbb`. Open ERP may send only some roles, and
+  a later version may add roles, so use your own color for any role that is
+  missing or unknown. The roles in version 1:
+
+| Role | Used for |
+| --- | --- |
+| `background` | window background |
+| `field` | editable fields and lists |
+| `field_readonly` | read-only or disabled fields |
+| `border` | field and panel borders |
+| `button`, `button_active` | buttons, and buttons under the pointer |
+| `text`, `text_muted`, `text_disabled` | normal, hint and disabled text |
+| `selection`, `selection_text` | selected rows and their text |
+| `ready`, `caution`, `error`, `neutral` | status text: good, needs attention, failed, not applicable |
+| `accent` | links, highlights and live values |
+
+A theme is cosmetic. Never fail `open_setup` because of one; the Python library
+drops a malformed theme and skips colors it cannot read.
 
 ### `shutdown` (request; 3 s)
 

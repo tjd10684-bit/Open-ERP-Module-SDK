@@ -19,11 +19,20 @@ import math
 import os
 from pathlib import Path
 import queue
+import re
 import sys
 import threading
 from typing import Any, BinaryIO
 
 PROTOCOL_VERSION = 1
+THEME_VERSION = 1
+THEME_MODES = ("light", "dark")
+THEME_ROLES = (
+    "background", "field", "field_readonly", "border", "button", "button_active",
+    "text", "text_muted", "text_disabled", "selection", "selection_text",
+    "ready", "caution", "error", "neutral", "accent",
+)
+_HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 MAX_LINE_BYTES = 1024 * 1024
 MODULE_ERROR = 1000
 NOT_INITIALIZED = -32002
@@ -64,6 +73,37 @@ class Equipment:
 
 
 @dataclass(frozen=True)
+class Theme:
+    """Open ERP's colours as the operator sees them now, so a setup window can match them.
+
+    ``mode`` is ``light`` or ``dark``. ``colors`` holds only the roles in ``THEME_ROLES`` that the host sent,
+    as lower-case ``#rrggbb``; use your own colour for any role that is missing.
+    """
+
+    mode: str
+    colors: dict[str, str]
+
+
+def parse_theme(value: Any) -> Theme | None:
+    """The theme a host sent with ``open_setup``; None when it sent none or one this library cannot use.
+
+    A theme is cosmetic, so a malformed one is dropped (never an error) and unknown roles or bad colours are skipped.
+    """
+    if value is None:
+        return None
+    version = value.get("version") if isinstance(value, dict) else None
+    if isinstance(version, bool) or version != THEME_VERSION or value.get("mode") not in THEME_MODES:
+        logger.warning("Ignoring a theme this library cannot use: %.200r", value)
+        return None
+    colors = value.get("colors")
+    colors = colors if isinstance(colors, dict) else {}
+    return Theme(value["mode"], {
+        role: color.lower() for role, color in colors.items()
+        if role in THEME_ROLES and isinstance(color, str) and _HEX_COLOR.fullmatch(color)
+    })
+
+
+@dataclass(frozen=True)
 class CaptureRequest:
     capture_id: str
     asset_id: str
@@ -93,6 +133,8 @@ class Module:
     name: str = ""
     version: str = ""
     acquisition_mode: str = "latest"
+    host_theme: Theme | None = None
+    """The colours Open ERP sent with the latest ``open_setup``; None until then, or when it sent none."""
 
     _host: _Host | None = None
 
@@ -111,7 +153,10 @@ class Module:
         """Called on the reader thread when Open ERP gives up on a capture; return quickly."""
 
     def open_setup(self, equipment: list[Equipment]) -> None:
-        """Show the setup window on the main thread and return when it closes."""
+        """Show the setup window on the main thread and return when it closes.
+
+        Match Open ERP's look with :attr:`host_theme`, which is set before this is called.
+        """
         raise ModuleError(f"{self.name or 'This module'} has no setup window.")
 
     def shutdown(self) -> None:
@@ -372,6 +417,7 @@ class _Host:
             equipment.append(Equipment(
                 item["asset_id"], str(item.get("tag", "")), str(item.get("name", "")), str(item.get("category", "")),
             ))
+        self.module.host_theme = parse_theme(params.get("theme"))
         self.module.open_setup(equipment)
         return {}
 

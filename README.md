@@ -37,7 +37,7 @@ class MyGauge(Module):
         return Reading(value=12.345, units="mm", source_id="my-gauge:port-3:channel-1")
 
     def open_setup(self, equipment):  # optional: your setup window (runs on the main thread)
-        ...
+        ...                           # self.host_theme holds Open ERP's colors, to match its look
 
 if __name__ == "__main__":
     raise SystemExit(run(MyGauge()))

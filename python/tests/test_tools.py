@@ -7,9 +7,10 @@ import zipfile
 
 import pytest
 
-from open_erp_module import host_check, manifest
+from open_erp_module import THEME_ROLES, host_check, manifest
 from open_erp_module.manifest import ManifestProblem
 from open_erp_module.package import build_package
+from open_erp_module.runtime import parse_theme
 
 TESTS = Path(__file__).parent
 SAMPLE = TESTS / "sample_module.py"
@@ -87,6 +88,14 @@ def test_simulated_gauge_example_captures_a_linked_asset(tmp_path, sdk_on_path, 
     assert code == 0, output
     assert "PASS  linked_assets: A1" in output
     assert "PASS  capture: 12.5 mm from simulated:gauge-2" in output
+
+
+def test_host_check_sample_theme_is_a_complete_valid_theme():
+    for mode in ("light", "dark"):
+        theme = parse_theme(host_check.sample_theme(mode))
+
+        assert theme is not None and theme.mode == mode
+        assert set(theme.colors) == set(THEME_ROLES)
 
 
 def test_host_check_explains_a_manifest_saved_with_a_byte_order_mark(tmp_path, capsys):

@@ -28,7 +28,7 @@ from typing import Any
 from uuid import uuid4
 
 from .manifest import ManifestProblem, load, packaged_program_problem
-from .runtime import PROTOCOL_VERSION
+from .runtime import PROTOCOL_VERSION, THEME_VERSION
 
 INITIALIZE_SECONDS, REQUEST_SECONDS, SHUTDOWN_SECONDS, EXIT_SECONDS = 15.0, 5.0, 3.0, 2.0
 _EOF = object()
@@ -196,6 +196,25 @@ def check_reading(result: Any, request: dict, mode: str) -> str:
     return f"{value:g} {result['units']} from {source}{note}"
 
 
+def sample_theme(mode: str) -> dict:
+    """A theme of the shape Open ERP sends with open_setup, for trying a setup window in both modes."""
+    colors = {
+        "light": {
+            "background": "#f0f0f0", "field": "#ffffff", "field_readonly": "#ececec", "border": "#a8a8a8",
+            "button": "#e1e1e1", "button_active": "#d3dce8", "text": "#1e1e1e", "text_muted": "#666666",
+            "text_disabled": "#9a9a9a", "selection": "#3a6ea5", "selection_text": "#ffffff", "ready": "#28623a",
+            "caution": "#7a4b00", "error": "#aa3333", "neutral": "#666666", "accent": "#245b75",
+        },
+        "dark": {
+            "background": "#202124", "field": "#2b2d31", "field_readonly": "#26282c", "border": "#4a4d52",
+            "button": "#34373c", "button_active": "#41464d", "text": "#e6e6e6", "text_muted": "#9aa0a6",
+            "text_disabled": "#6f737a", "selection": "#3a6ea5", "selection_text": "#ffffff", "ready": "#7ee2a8",
+            "caution": "#e3b341", "error": "#ff7b72", "neutral": "#a0a0a0", "accent": "#79c0ff",
+        },
+    }
+    return {"version": THEME_VERSION, "mode": mode, "colors": colors[mode]}
+
+
 def run_checks(options: argparse.Namespace, command: list[str]) -> int:
     check = Checker()
     folder = options.folder.resolve()
@@ -257,7 +276,10 @@ def run_checks(options: argparse.Namespace, command: list[str]) -> int:
                 for index, asset in enumerate(options.asset or ["host-check-asset"], start=1)
             ]
             print("....  open_setup: waiting for the module's setup window to close")
-            answer = session.request("open_setup", {"equipment": equipment}, timeout=None)
+            params: dict = {"equipment": equipment}
+            if options.theme != "none":
+                params["theme"] = sample_theme(options.theme)
+            answer = session.request("open_setup", params, timeout=None)
             if "error" in answer:
                 check.failed("open_setup", answer["error"]["message"])
             else:
@@ -327,6 +349,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--capture", metavar="ASSET_ID", help="take one reading for this asset id")
     parser.add_argument("--units", choices=("mm", "in"), default="mm", help="units to request (default mm)")
     parser.add_argument("--setup", action="store_true", help="open the module's setup window")
+    parser.add_argument(
+        "--theme", choices=("none", "light", "dark"), default="none",
+        help="with --setup, send a sample theme the way a current Open ERP does (default none, like an older one)",
+    )
     parser.add_argument("--asset", action="append", metavar="ASSET_ID", help="asset offered to setup (repeatable)")
     parser.add_argument("--data-dir", help="settings folder to use (default: a temporary folder)")
     parser.add_argument("-v", "--verbose", action="store_true", help="show the module's stderr as it runs")

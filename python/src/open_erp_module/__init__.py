@@ -23,17 +23,20 @@ See ``PROTOCOL.md`` for the contract this library implements.
 
 from .runtime import (
     PROTOCOL_VERSION,
+    THEME_ROLES,
     CaptureRequest,
     Context,
     Equipment,
     Module,
     ModuleError,
     Reading,
+    Theme,
     run,
     serve,
 )
 
 __all__ = [
-    "PROTOCOL_VERSION", "CaptureRequest", "Context", "Equipment", "Module", "ModuleError", "Reading", "run", "serve",
+    "PROTOCOL_VERSION", "THEME_ROLES", "CaptureRequest", "Context", "Equipment", "Module", "ModuleError", "Reading",
+    "Theme", "run", "serve",
 ]
-__version__ = "1.1.0"
+__version__ = "1.2.0"

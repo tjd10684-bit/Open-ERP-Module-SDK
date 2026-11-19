@@ -5,7 +5,9 @@ import json
 import queue
 import threading
 
-from open_erp_module import Equipment, Module, ModuleError, Reading, serve
+import pytest
+
+from open_erp_module import Equipment, Module, ModuleError, Reading, Theme, serve
 
 
 class Gauge(Module):
@@ -225,3 +227,61 @@ def test_open_setup_runs_on_the_thread_that_called_serve(tmp_path):
     assert started["result"]["capabilities"] == {"setup": True}
     assert setup["result"] == {}
     assert module.setup == (True, [Equipment("A1", "G-1", "Caliper", "Calipers")])
+
+
+def setup_with(tmp_path, *themes):
+    """The ``host_theme`` the module saw in one ``open_setup`` per entry of ``themes`` (``...`` sends none)."""
+    class SetupGauge(Gauge):
+        def __init__(self):
+            super().__init__()
+            self.seen = []
+
+        def open_setup(self, equipment):
+            self.seen.append(self.host_theme)
+
+    module = SetupGauge()
+
+    def play(host):
+        host.request("initialize", hello(tmp_path))
+        for theme in themes:
+            params = {"equipment": []} if theme is ... else {"equipment": [], "theme": theme}
+            assert host.request("open_setup", params)["result"] == {}
+
+    converse(module, play)
+    return module.seen
+
+
+def test_open_setup_gives_the_module_the_hosts_theme(tmp_path):
+    sent = {"version": 1, "mode": "dark", "colors": {"background": "#202124", "text": "#E6E6E6"}}
+
+    assert setup_with(tmp_path, sent) == [Theme("dark", {"background": "#202124", "text": "#e6e6e6"})]
+
+
+def test_a_host_that_sends_no_theme_leaves_it_unset_and_each_setup_replaces_the_last(tmp_path):
+    sent = {"version": 1, "mode": "light", "colors": {"accent": "#245b75"}}
+
+    assert setup_with(tmp_path, ...) == [None]
+    assert setup_with(tmp_path, sent, ...) == [Theme("light", {"accent": "#245b75"}), None]
+
+
+@pytest.mark.parametrize("theme", [
+    "dark", ["dark"], {}, {"mode": "dark"}, {"version": 2, "mode": "dark"},
+    {"version": 1, "mode": "sepia"}, {"version": True, "mode": "dark"},
+])
+def test_a_theme_the_library_cannot_use_is_dropped_and_setup_still_runs(tmp_path, theme):
+    assert setup_with(tmp_path, theme) == [None]
+
+
+def test_only_known_roles_with_hex_colours_are_kept(tmp_path):
+    colors = {
+        "background": "#202124", "text": "red", "accent": "#12345", "ready": "#12345g", "error": 7,
+        "neutral": "#aabbcc", "gradient": "#000000", "field": "#2b2d31ff",
+    }
+
+    [theme] = setup_with(tmp_path, {"version": 1, "mode": "dark", "colors": colors})
+
+    assert theme == Theme("dark", {"background": "#202124", "neutral": "#aabbcc"})
+
+
+def test_a_theme_with_no_usable_colours_still_tells_the_module_the_mode(tmp_path):
+    assert setup_with(tmp_path, {"version": 1, "mode": "light", "colors": "none"}) == [Theme("light", {})]
