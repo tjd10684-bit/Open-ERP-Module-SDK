@@ -95,3 +95,13 @@ updates* in [`PROTOCOL.md`](PROTOCOL.md).
 cd python
 python -m pytest
 ```
+
+## License
+
+The SDK, its Python library and the example module are released under the
+[MIT License](LICENSE), Copyright (c) 2026 TD Manufacturing. You may use it in a
+module under any licence you like, including a proprietary one.
+
+Open ERP itself is licensed AGPL-3.0-or-later. A module is a separate program
+that talks to Open ERP only over standard input and output (JSON-RPC), so the
+AGPL does not apply to your module.

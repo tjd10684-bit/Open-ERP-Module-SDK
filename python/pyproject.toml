@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,9 @@ name = "open-erp-module"
 version = "1.2.0"
 description = "Build Open ERP measurement modules: helper programs that connect measuring devices to Open ERP"
 requires-python = ">=3.11"
+authors = [{ name = "TD Manufacturing" }]
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = []
 
 [project.optional-dependencies]
